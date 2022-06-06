@@ -64,4 +64,15 @@ public class Model {
 		
 	}
 	
+	public List<Team> listAllTeams(){
+		return dao.listAllTeams();
+	}
+
+	public int nVertici() {
+		return this.grafo.vertexSet().size();
+	}
+
+	public int nArchi() {
+		return this.grafo.edgeSet().size();
+	}
 }
