@@ -27,10 +27,10 @@ public class Model {
 		this.grafo = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
 		
 		//Aggiunta vertici
-		Graphs.addAllVertices(this.grafo, dao.listAllTeams());
+		Graphs.addAllVertices(this.grafo, dao.listAllTeams()); //In realta li hai gia nella mappa, potresti fare idMap.values()
 		
 		System.out.println("Vertici del grafo creati!\n");
-		System.out.println("#VERTICI: "+ this.grafo.vertexSet().size());
+		System.out.println("#VERTICI: "+ this.grafo.vertexSet().size() + "\n");
 		
 		//Aggiunta archi
 		List<Adiacenza> adiacenze = this.dao.getAdiacenza(idMap);
@@ -52,10 +52,11 @@ public class Model {
 		//Se peso == 0 non aggiungiamo l'arco
 		
 		for(Adiacenza a: adiacenze) {
-			int peso = Math.abs(a.getT1().getPunti() -a.getT2().getPunti());
-			//Aggiungo solo se > 0, altrimenti non aggiungo
-			if(peso > 0)
-				Graphs.addEdgeWithVertices(this.grafo, a.getT1(), a.getT2(), peso);
+			if(a.getT1().getPunti() > a.getT2().getPunti()) {
+				Graphs.addEdgeWithVertices(this.grafo, a.getT1(), a.getT2(), Math.abs(a.getT1().getPunti()-a.getT2().getPunti()));
+			}else if(a.getT2().getPunti() > a.getT1().getPunti()) {
+				Graphs.addEdgeWithVertices(this.grafo, a.getT2(), a.getT1(), Math.abs(a.getT1().getPunti()-a.getT2().getPunti()));
+			}
 		}
 		
 		System.out.println("Archi del grafo creati!\n");
@@ -75,4 +76,6 @@ public class Model {
 	public int nArchi() {
 		return this.grafo.edgeSet().size();
 	}
+	
+	
 }
