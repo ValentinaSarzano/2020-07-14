@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import it.polito.tdp.PremierLeague.model.Action;
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.Team;
@@ -133,6 +134,33 @@ public class PremierLeagueDAO {
 			}
 			conn.close();
 			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+	}
+	
+	public List<Adiacenza> getAdiacenza(Map<Integer, Team> idMap) {
+		
+		String sql = "SELECT TeamHomeID, TeamAwayID, ResultOfTeamHome "
+				+ "FROM matches "
+				+ "WHERE TeamHomeID > TeamAwayID "
+				+ "ORDER BY TeamHomeID ASC";
+		
+		List<Adiacenza> result = new ArrayList<>();
+		
+		try {
+
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			
+			while (res.next()) {
+				Adiacenza a = new Adiacenza(idMap.get(res.getInt("TeamHomeID")), idMap.get(res.getInt("TeamAwayID")), res.getInt("ResultOfTeamHome"));
+			    result.add(a);
+			}
+			conn.close();
+			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");

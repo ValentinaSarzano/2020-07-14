@@ -3,7 +3,8 @@ package it.polito.tdp.PremierLeague.model;
 public class Team {
 	Integer teamID;
 	String name;
-
+	int punti = 0;
+	
 	public Team(Integer teamID, String name) {
 		super();
 		this.teamID = teamID;
@@ -23,7 +24,13 @@ public class Team {
 		this.name = name;
 	}
 	
+	public void setPunti(int punti) {
+		this.punti = punti;
+	}
 	
+	public int getPunti() {
+		return punti;
+	}
 
 	@Override
 	public String toString() {
