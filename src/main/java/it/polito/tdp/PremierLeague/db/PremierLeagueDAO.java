@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.PremierLeague.model.Action;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
@@ -112,4 +114,28 @@ public class PremierLeagueDAO {
 		}
 	}
 	
+	public void getAllTeams(Map<Integer, Team> idMap){
+		String sql = "SELECT * FROM Teams";
+		
+
+		try {
+
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			
+			while (res.next()) {
+
+				if(!idMap.containsKey(res.getInt("TeamID"))) {
+				   Team team = new Team(res.getInt("TeamID"), res.getString("Name"));
+				   idMap.put(team.getTeamID(), team);
+				}
+			}
+			conn.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+	}
 }
