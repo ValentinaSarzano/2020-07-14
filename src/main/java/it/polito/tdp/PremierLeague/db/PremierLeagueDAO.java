@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import it.polito.tdp.PremierLeague.model.Action;
-import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.Team;
@@ -117,7 +116,6 @@ public class PremierLeagueDAO {
 	
 	public void getAllTeams(Map<Integer, Team> idMap){
 		String sql = "SELECT * FROM Teams";
-		
 
 		try {
 
@@ -139,31 +137,34 @@ public class PremierLeagueDAO {
 			throw new RuntimeException("SQL Error");
 		}
 	}
-	
-	public List<Adiacenza> getAdiacenza(Map<Integer, Team> idMap) {
+
+	public void assegnaPunti(Map<Integer, Team> idMap) {
 		
-		String sql = "SELECT TeamHomeID, TeamAwayID, ResultOfTeamHome "
-				+ "FROM matches "
-				+ "WHERE TeamHomeID > TeamAwayID "
-				+ "ORDER BY TeamHomeID ASC";
-		
-		List<Adiacenza> result = new ArrayList<>();
+		String sql = "SELECT m.TeamHomeID AS id1, m.TeamAwayID AS id2, m.ResultOfTeamHome AS risultato "
+				+ "FROM matches m";
 		
 		try {
-
 			Connection conn = DBConnect.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
 			ResultSet res = st.executeQuery();
 			
 			while (res.next()) {
-				Adiacenza a = new Adiacenza(idMap.get(res.getInt("TeamHomeID")), idMap.get(res.getInt("TeamAwayID")), res.getInt("ResultOfTeamHome"));
-			    result.add(a);
+				if(res.getInt("risultato") == 0) { //Pareggio
+					idMap.get(res.getInt("id1")).setPunti(1);
+					idMap.get(res.getInt("id2")).setPunti(1);
+				}else if(res.getInt("risultato") == 1) {//Vittoria
+					idMap.get(res.getInt("id1")).setPunti(3);
+				}else if(res.getInt("risultato") == -1) {//Sconfitta
+					idMap.get(res.getInt("id2")).setPunti(3);
+				}
+				
 			}
 			conn.close();
-			return result;
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");
 		}
+		
 	}
 }

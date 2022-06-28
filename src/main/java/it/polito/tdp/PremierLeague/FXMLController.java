@@ -5,10 +5,13 @@
 package it.polito.tdp.PremierLeague;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Model;
 import it.polito.tdp.PremierLeague.model.Team;
+import it.polito.tdp.PremierLeague.model.Vicino;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -49,14 +52,35 @@ public class FXMLController {
 
     @FXML
     void doClassifica(ActionEvent event) {
+    	txtResult.clear();
+    	Team t = cmbSquadra.getValue();
+    	
+    	if(t == null) {
+    		txtResult.setText("Scegliere una squadra!");
+    		return;
+    	}
+    	
+    	txtResult.appendText("SQUADRE MIGLIORI:\n");
+    	for(Vicino vv: this.model.getSquadreMigliori(t)) {
 
+        	txtResult.appendText(vv + " " + vv.getPeso() + "\n");
+    	}
+    	
+    	txtResult.appendText("\n SQUADRE PEGGIORI:\n");
+    	for(Vicino v: this.model.getSquadreBattute(t)) {
+
+        	txtResult.appendText(v + " " + v.getPeso() + "\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
 
+    	
     	txtResult.clear();
     	this.model.CreaGrafo();
+    	
+    	btnClassifica.setDisable(false);
     	
     	txtResult.appendText("Grafo creato!\n");
     	txtResult.appendText("#VERTICI: " + this.model.nVertici() + "\n");
@@ -67,6 +91,24 @@ public class FXMLController {
     @FXML
     void doSimula(ActionEvent event) {
 
+    	txtResult.clear();
+    	int N =0;
+    	int X =0;
+    	try {
+    		N = Integer.parseInt(txtN.getText());
+    	} catch(NumberFormatException ex) {
+    		txtResult.appendText("Errore: inserire un numero valido per N\n");
+    		return;
+    	}
+    	try {
+    		X = Integer.parseInt(txtX.getText());
+    	} catch(NumberFormatException ex) {
+    		txtResult.appendText("Errore: inserire un numero valido per N\n");
+    		return;
+    	}
+    	model.simula(N, X);
+    	txtResult.appendText("Numero di partite critiche: "+model.getPartiteCritiche()+"\n");
+    	txtResult.appendText("Numero medio di reporter che hanno assistito ad ogni partita: "+model.getMediaReporter());
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -78,6 +120,8 @@ public class FXMLController {
         assert txtN != null : "fx:id=\"txtN\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtX != null : "fx:id=\"txtX\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
+   
+        btnClassifica.setDisable(true);
     }
     
     public void setModel(Model model) {

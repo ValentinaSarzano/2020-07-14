@@ -1,5 +1,7 @@
 package it.polito.tdp.PremierLeague.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +18,17 @@ public class Model {
 	private PremierLeagueDAO dao;
 	private Graph<Team, DefaultWeightedEdge> grafo;
 	private Map<Integer, Team> idMap;
+	private List<Match> matches;
+	
+	//Risultati simulazione
+	private int partiteCritiche;
+	private double mediaReporter;
 	
 	public Model() {
 		this.dao = new PremierLeagueDAO();
 		this.idMap = new HashMap<>();
 		this.dao.getAllTeams(idMap);
+		this.matches = this.dao.listAllMatches();
 	}
 	
 	public void CreaGrafo() {
@@ -33,32 +41,22 @@ public class Model {
 		System.out.println("#VERTICI: "+ this.grafo.vertexSet().size() + "\n");
 		
 		//Aggiunta archi
-		List<Adiacenza> adiacenze = this.dao.getAdiacenza(idMap);
-		for(Adiacenza a: adiacenze) {
-			if(this.grafo.containsVertex(a.getT1()) && this.grafo.containsVertex(a.getT2())) {
-				//Calcolo il peso effettivo 
-				if(a.getPeso() == -1) { //sconfitta per T1, vincita per T2
-					a.getT2().setPunti(a.getT2().getPunti()+3);
-				} else if(a.getPeso() == 0) { //pareggio
-					a.getT1().setPunti(a.getT1().getPunti()+1);
-					a.getT2().setPunti(a.getT2().getPunti()+1);
-				}else if(a.getPeso() == 1) { //vittoria per T1
-					a.getT1().setPunti(a.getT1().getPunti()+3);
-				}
-			}
-		} 
-		//A questo punto abbiamo settato i punti per ogni team contenuto nella lista di adiacenze (teams appartenenti al grafo)
+		this.dao.assegnaPunti(idMap);
+		
 		//Ora dobbiamo creare bene gli archi attribuendo a ciascuno un peso e un orientamento
 		//Se peso == 0 non aggiungiamo l'arco
-		
-		for(Adiacenza a: adiacenze) {
-			if(a.getT1().getPunti() > a.getT2().getPunti()) {
-				Graphs.addEdgeWithVertices(this.grafo, a.getT1(), a.getT2(), Math.abs(a.getT1().getPunti()-a.getT2().getPunti()));
-			}else if(a.getT2().getPunti() > a.getT1().getPunti()) {
-				Graphs.addEdgeWithVertices(this.grafo, a.getT2(), a.getT1(), Math.abs(a.getT1().getPunti()-a.getT2().getPunti()));
+		for(Team t1: idMap.values()) {
+			for(Team t2: idMap.values()) {
+				if(t1.compareTo(t2)!=0 && this.grafo.vertexSet().contains(t1) && this.grafo.vertexSet().contains(t2) && !this.grafo.edgeSet().contains(this.grafo.getEdge(t1, t2)) && !this.grafo.edgeSet().contains(this.grafo.getEdge(t2, t1))) {
+					if(t1.getPunti() - t2.getPunti() > 0) { ////T1 ha il punteggio maggiore, orientamento: T1 --> T2
+						Graphs.addEdgeWithVertices(this.grafo, t1, t2, Math.abs(t1.getPunti() - t2.getPunti()));
+					} else if(t1.getPunti() - t2.getPunti() < 0) { ////T2 ha il punteggio maggiore, orientamento: T2 --> T1
+						Graphs.addEdgeWithVertices(this.grafo, t2, t1, Math.abs(t2.getPunti() - t1.getPunti()));
+					}
+					
+				}
 			}
 		}
-		
 		System.out.println("Archi del grafo creati!\n");
 		System.out.println("#ARCHI: "+ this.grafo.edgeSet().size());
 		
@@ -77,5 +75,47 @@ public class Model {
 		return this.grafo.edgeSet().size();
 	}
 	
+	public List<Vicino> getSquadreBattute(Team t){
+		List<Vicino> squadreBattute = new ArrayList<>();
+		//Le squadre battute saranno quelle collegate da archi uscenti da t (ma non solo, anche tutte quelle che stanno al di sotto)
+	   
+		for(DefaultWeightedEdge e: this.grafo.outgoingEdgesOf(t)) {
+			Vicino v = new Vicino(this.grafo.getEdgeTarget(e), (int) this.grafo.getEdgeWeight(e));
+			squadreBattute.add(v);
+		
+		}
+		Collections.sort(squadreBattute);
+		
+		return squadreBattute;
+	}
+	
+	public List<Vicino> getSquadreMigliori(Team t){
+		List<Vicino> squadreMigliori = new ArrayList<>();
+		//Le squadre battute saranno quelle collegate da archi uscenti da t (ma non solo, anche tutte quelle che stanno al di sotto)
+	   
+		for(DefaultWeightedEdge e: this.grafo.incomingEdgesOf(t)) {
+			Vicino vv = new Vicino(this.grafo.getEdgeSource(e), (int) this.grafo.getEdgeWeight(e));
+			squadreMigliori.add(vv);
+		}
+		Collections.sort(squadreMigliori);
+		
+		return squadreMigliori;
+	}
+	
+	public void simula(int N, int X) {
+		Simulatore sim = new Simulatore(this.grafo, this.idMap);
+		sim.init(N, X, matches, idMap);
+		sim.run();
+		this.partiteCritiche = sim.getPartiteCritiche();
+		this.mediaReporter = sim.getMediaReporter();
+	}
+	
+	public int getPartiteCritiche() {
+		return partiteCritiche;
+	}
+	
+	public double getMediaReporter() {
+		return mediaReporter;
+	}
 	
 }
